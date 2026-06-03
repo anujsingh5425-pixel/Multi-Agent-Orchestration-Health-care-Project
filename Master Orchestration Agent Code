@@ -1,0 +1,231 @@
+MASTER AGENT ORCHESTRATION
+
+OVERVIEW
+
+The Master Agent Orchestration Agent acts as the central coordinator for the entire healthcare solution. It receives all user requests, understands the user's intent, and routes the conversation to the most appropriate specialized agent. The goal is to ensure that each query is handled by the right expert agent while maintaining a seamless user experience.
+
+The following specialized agents are orchestrated through the Master Agent:
+
+• Health Assistant Agent
+
+• Appointment Booking Agent
+
+• Risk Analysis Agent
+
+• Medication Adherence Agent
+
+• Doctor Recommendation Agent
+
+• General Support Agent
+
+---
+
+AGENT ROUTING AND CONTEXT TRANSFER
+
+The Master Agent uses AgentScript routing and Utilis.Transition to transfer the complete conversation context between agents.
+
+During agent handoff, the following information is preserved:
+
+• User query
+
+• Conversation history
+
+• User intent
+
+• Previous agent responses
+
+• Session context
+
+This ensures that users do not need to repeat information when the conversation is routed from one agent to another.
+
+---
+
+AGENTSCRIPT Code shart here: 
+
+system:
+    instructions: "You are an AI Agent."
+    messages:
+        welcome: |
+            Hi, I'm an AI service assistant. How can I help you?
+        error: "Sorry, it looks like something has gone wrong."
+
+config:
+    agent_label: "Master Orchestration Agent"
+    agent_template: "SvcCopilotTmpl__AgentforceServiceAgent"
+    developer_name: "Master_Orchestration_Agent"
+    description: "Deliver personalized customer interactions with an autonomous AI agent. Agentforce Service Agent intelligently supports your customers with common inquiries and escalates complex issues."
+    default_agent_user: "first_book_review_agent@00dgk00000nsdhz2035360897.ext"
+
+variables:
+    authenticationKey: mutable string
+        description: "Stores the authentication key that's used to generate the verification code."
+        visibility: "Internal"
+    customerId: mutable string
+        description: "Stores the Salesforce user ID or contact ID."
+        visibility: "Internal"
+    customerType: mutable string
+        description: "Stores the customer ID type, whether it's a Salesforce user or a contact."
+        visibility: "Internal"
+    isVerified: mutable boolean = False
+        label: "isVerified"
+        description: "Stores a boolean value that indicates whether the customer code is verified."
+        visibility: "Internal"
+    EndUserId: linked string
+        source: @MessagingSession.MessagingEndUserId
+        description: "This variable may also be referred to as MessagingEndUser Id"
+    RoutableId: linked string
+        source: @MessagingSession.Id
+        description: "This variable may also be referred to as MessagingSession Id"
+    ContactId: linked string
+        source: @MessagingEndUser.ContactId
+        description: "This variable may also be referred to as MessagingEndUser ContactId"
+    EndUserLanguage: linked string
+        source: @MessagingSession.EndUserLanguage
+        description: "This variable may also be referred to as MessagingSession EndUserLanguage"
+    ChannelType: linked string
+        source: @MessagingSession.ChannelType
+        description: "This variable may also be referred to as MessagingSession ChannelType"
+    VerifiedCustomerId: mutable string
+        description: "This variable may also be referred to as VerifiedCustomerId"
+        visibility: "Internal"
+    emailCaseId: mutable string
+        description: "Stores the Salesforce Case ID created by an inbound email."
+        visibility: "External"
+    endUserEmail: mutable string
+        description: "Stores email address of the end user who sent the inbound email."
+        visibility: "External"
+    endUserContactId: mutable string
+        description: "Stores the Salesforce Contact ID associated with the end user who sent the inbound email."
+        visibility: "External"
+    VoiceCallId: linked string
+        description: "This variable may also be referred to as Voice Call Id"
+        source: @VoiceCall.Id
+
+language:
+    additional_locales: "en_GB"
+    default_locale: "en_US"
+    all_additional_locales: False
+
+
+
+start_agent agent_router:
+    label: "Agent Router"
+    description: "Analyze user intent and intelligently route the request to the most relevant healthcare subagent."
+ 
+    reasoning:
+        instructions: |
+                You are a Healthcare Master Orchestration Agent.
+
+                Your responsibility is to analyze the user's query, understand the intent, and route the request to the most appropriate healthcare subagent.
+
+                Routing Rules:
+
+                1. Use "Health Assistant AI" when the user asks about:
+                - Symptoms
+                - Diseases
+                - Medicines
+                - Health guidance
+                - Basic healthcare advice
+                - Doctor specialization suggestions
+
+
+                2. Use "Healthcare Appointment Agent" when the user asks about:
+                - Booking appointments
+                - Rescheduling appointments
+                - Cancelling appointments
+                - Doctor availability
+                - Appointment timing
+
+                3. Use "HealthcareAdherenceAI" when the user asks about:
+                - Medication adherence
+                - Missed medicines
+                - Medicine reminders
+                - Patient compliance
+                - Treatment follow-up
+
+                4. Use "Healthcare Risk Analysis Agent" when the user asks about:
+                - Patient risk analysis
+                - High-risk patients
+                - Calculated Insights
+                - Diabetes risk
+                - Heart disease risk
+                - Obesity risk
+                - Oxygen emergency risk
+                - Stress or sleep disorder risk
+                - Data Cloud healthcare insights
+
+                Important Rules:
+                - Always select only the most relevant subagent.
+                - Do not answer medical questions directly if a specialized subagent is available.
+                - Use conversation context before selecting an agent.
+                - If the query is unclear, ask a clarification question.
+        actions:
+            Healthcare_Risk_Analysis_Agent: @connected_subagent.Healthcare_Risk_Analysis_Agent
+            Healthcare_Appointment_Agent: @connected_subagent.Healthcare_Appointment_Agent
+            HealthcareAdherenceAI: @connected_subagent.HealthcareAdherenceAI
+            Health_Assistant_AI: @connected_subagent.Health_Assistant_AI
+
+
+connected_subagent Health_Assistant_AI:
+    label: "Health Assistant AI"
+    target: "agentforce://X00DgK00000NsDHZ_Health_Assistant_AI"
+    loading_text: "Collaborating with other agents"
+    description: "Handles general healthcare conversations including symptoms basic diseases medicine suggestions health guidance and doctor specialization recommendations and should only be used for non emergency healthcare assistance and symptom related conversations."
+
+connected_subagent Healthcare_Appointment_Agent:
+    label: "Healthcare Appointment Agent"
+    target: "agentforce://X00DgK00000NsDHZ_Healthcare_Appointment_Agent"
+    loading_text: "Collaborating with other agents"
+    description:"Handles all doctor appointment operations including booking appointments rescheduling appointments cancelling appointments checking doctor availability and managing patient scheduling requests."
+
+connected_subagent HealthcareAdherenceAI:
+    label: "HealthcareAdherenceAI"
+    target: "agentforce://X00DgK00000NsDHZ_HealthcareAdherenceAI"
+    loading_text: "Collaborating with other agents"
+    description: "Handles medication adherence and treatment follow up scenarios including missed medicines medicine reminders patient compliance tracking adherence monitoring and treatment continuation support."
+
+
+connected_subagent Healthcare_Risk_Analysis_Agent:
+    label: "Healthcare Risk Analysis Agent"
+    target: "agentforce://X00DgK00000NsDHZ_Healthcare_Risk_Analysis_Agent"
+    loading_text: "Collaborating with Risk Analysis Agent"
+    description: "Handles healthcare risk analysis and Data Cloud Calculated Insight related queries including diabetes risk heart disease risk obesity risk oxygen emergency risk sleep disorder risk stress cardiac risk and patient monitoring."
+    inputs:
+        VoiceCallId: string = @variables.RoutableId
+        RoutableId: string = @variables.RoutableId
+        EndUserLanguage: string = @variables.EndUserLanguage
+        EndUserId: string = @variables.EndUserId
+        ContactId: string = @variables.ContactId
+
+
+
+
+
+connection customer_web_client:
+    adaptive_response_allowed: True
+
+
+
+
+---
+
+
+WEBSITE INTEGRATION
+
+The complete solution is connected to the healthcare Experience Cloud website using:
+
+• Enhanced Messaging Channel
+
+• Embedded Service Deployment
+
+• Agentforce Service Agent
+
+. Omni flow for Service Agent (for this agent)
+
+When a user opens the website and starts a chat, the request is sent to the Master Agent. The Master Agent then identifies the intent and routes the request to the appropriate specialized agent while preserving the complete conversation context.
+
+---
+
+EXPECTED OUTCOME
+
+The Master Agent provides intelligent agent orchestration across all healthcare agents. Through AgentScript routing and Utilis.Transition context passing, the system enables seamless Agent-to-Agent communication, maintains conversation continuity, and ensures that every user request is handled by the most suitable specialized agent.
